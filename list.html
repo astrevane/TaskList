@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html ng-app='app'>
+
+<head>
+    <meta charset='utf-8'>
+    <title>Task list</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.0/css/bootstrap.min.css"
+        integrity="sha384-PDle/QlgIONtM1aqA2Qemk5gPOE7wFq8+Em+G/hmo5Iq0CCmYZLv3fVRDJ4MMwEA" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.0/js/bootstrap.min.js"
+        integrity="sha384-7aThvCh9TypR7fIc2HV4O/nFMVCBwyIUKL8XCtKE+8xgCgl/PQGuFsvShjr74PBp" crossorigin="anonymous">
+        </script>
+    <style>
+        #container {
+            margin-left: auto;
+            margin-right: auto;
+            width: 1000px;
+        }
+    </style>
+</head>
+
+<body ng-controller="ctrl">
+    <div id="container">
+        <form>
+            <div class="form-group" style="text-align: center">
+                <h1>To-do list</h1>
+                <label for="new-element">Element to add:</label>
+                <textarea class="form-control" id="new-element" rows="1" ng-model="new_element"></textarea>
+                <button type="button" class="btn btn-outline-primary" ng-click="add_to_list()">Add to list</button>
+                <p style="color: red">{{error}}</p>
+            </div>
+        </form>
+
+        <ul class="list-group" ng-repeat='item in list'>
+            <li class="list-group-item">{{item}}</li>
+        </ul>
+
+        <div style="text-align: center">
+            <button class="btn btn-outline-primary" ng-click='previous_page()'
+                ng-disabled='curr_page == 1'>Previous</button>
+            <span ng-repeat="page in pages">
+                <button class="btn btn-outline-primary" ng-click='go_to_page(page)'
+                    ng-disabled='curr_page == page'>{{page}}</button>
+            </span>
+            <button class="btn btn-outline-primary" ng-click='next_page()'
+                ng-disabled='curr_page == page_count'>Next</button>
+        </div>
+
+
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular.min.js"></script>
+    <script>
+        var app = angular.module('app', [])
+        app.controller('ctrl', function ($scope) {
+            $scope.list = []
+            var all_elements = []
+            $scope.new_element = ""
+            $scope.page_count = 1
+            $scope.curr_page = 1
+            $scope.pages = []
+            var MAX_WORD_LENGTH = 50
+            var MAX_WORD_COUNT = 200
+            var ELEMENTS_PER_PAGE = 10
+
+
+            function refresh_list() {
+                $scope.page_count = Math.floor(all_elements.length / ELEMENTS_PER_PAGE)
+                if (all_elements.length % ELEMENTS_PER_PAGE != 0) $scope.page_count += 1
+                if ($scope.page_count == 0) $scope.page_count = 1
+                $scope.list = []
+                for (var i = ($scope.curr_page - 1) * ELEMENTS_PER_PAGE, j = 0; 
+                        j < ELEMENTS_PER_PAGE && i < all_elements.length;
+                        ++i, ++j) 
+                {
+                    $scope.list.push(all_elements[i])
+                }
+                $scope.pages = []
+                var curr_pg = $scope.curr_page
+                $scope.pages.push(curr_pg)
+                if (curr_pg + 1 <= $scope.page_count) $scope.pages.push(curr_pg + 1)                
+                if (curr_pg + 2 <= $scope.page_count) $scope.pages.push($scope.page_count)
+                if (curr_pg - 1 > 0) $scope.pages.unshift(curr_pg - 1)
+                if (curr_pg - 2 > 0) $scope.pages.unshift(1)
+            }
+
+            $scope.go_to_page = function (page) {
+                $scope.curr_page = page
+                refresh_list()
+            }
+
+            $scope.next_page = function () {
+                $scope.go_to_page($scope.curr_page + 1)
+            }
+
+            $scope.previous_page = function () {
+                $scope.go_to_page($scope.curr_page - 1)
+            }
+
+            $scope.add_to_list = function () {
+                if ($scope.new_element.length == 0) {
+                    $scope.error = "Text field is empty"
+                    return
+                }
+                if (all_elements.includes($scope.new_element)) {
+                    $scope.error = "Element already on the list"
+                    return
+                }
+                var words = $scope.new_element.split(' ')
+                if (words.length > MAX_WORD_COUNT) {
+                    $scope.error = "Maximum number of words in the text is " + MAX_WORD_COUNT
+                    return
+                }
+                for (var w of words) {
+                    if (w.length > MAX_WORD_LENGTH) {
+                        $scope.error = "Maximum length for words in text is " + MAX_WORD_LENGTH
+                        return
+                    }
+                }
+                $scope.error = ""
+                all_elements.unshift($scope.new_element)
+                $scope.new_element = ""
+                refresh_list()
+            }
+
+            refresh_list()
+
+        })
+    </script>
+</body>
+
+</html>
